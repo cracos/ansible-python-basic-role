@@ -1,0 +1,38 @@
+---
+
+- name: find python version
+  command: python --version
+  register: py
+
+- name: Ensure dependencies are installed
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - build-essential
+    - libsqlite3-dev
+    - zlib1g-dev
+    - libncurses5-dev
+    - libgdbm-dev
+    - libbz2-dev
+    - libssl-dev
+    - libdb-dev
+  when: py.stderr != "Python 2.7.14"
+
+- name: download and unpack python 2.7.14
+  unarchive:
+    src: https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz
+    dest: /tmp
+    remote_src: yes
+  when: py.stderr != "Python 2.7.14"
+
+- name: Configure, compile and install Python
+  shell: "{{ item }}"
+  args:
+    chdir: /tmp/Python-2.7.14
+  become: yes
+  with_items:
+    - ./configure
+    - make
+    - make install
+  when: py.stderr != "Python 2.7.14"
